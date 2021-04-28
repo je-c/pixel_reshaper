@@ -1,9 +1,8 @@
-import pandas as pd
 import numpy as np
 from PIL import Image
 import random, csv, os, shutil
 
-def unpack_images(classNames, loc, dirName, splitPercent, dimImage, fileName, colorEncode='RGB', pixDtype='float64'):
+def unpack_images(classNames, loc, dirName, splitPercent, dimImage, fileName, containsLabels=True, colorEncode='RGB', pixDtype='float64'):
     """
     Unpack an image dataset stored as raw data (csv or otherwise) into .png's. 
     Creates file structure for easy data loading and handles train/test
@@ -25,6 +24,8 @@ def unpack_images(classNames, loc, dirName, splitPercent, dimImage, fileName, co
         a tuple of integers such that (h, w, c) corresponds to height, width and channels
     fileName : str
         data file name, expects .csv in semi-colon, comma, pipe or tsv format
+    containsLabels : bool
+        denotes if labels are present in the dataset, default False, expected label column index = [-1]
     colorEncode : str
         color encoding for the resulting image, default 'RGB'
     pixDtype : str
@@ -78,10 +79,10 @@ def unpack_images(classNames, loc, dirName, splitPercent, dimImage, fileName, co
     except FileExistsError:
         print(f'{dirName} already exists - consider deleting the directory for a clean install!')
     
-    numSamples = len(pd.read_csv(fileName))
-    test_idx = [random.randint(0, numSamples) for i in range(int(numSamples * splitPercent))]
     print(f'Unpacking {fileName}...\nPlease wait...')
     with open(fileName) as csv_file:
+        numSamples = sum(1 for line in csv_file)-1
+        test_idx = [random.randint(0, numSamples) for i in range(int(numSamples * splitPercent))]
         delim = csv.Sniffer().sniff(csv_file.read(), delimiters=';,\t|')
         csv_file.seek(0)
         csv_reader = csv.reader(csv_file, delim)
@@ -90,11 +91,11 @@ def unpack_images(classNames, loc, dirName, splitPercent, dimImage, fileName, co
         fileCount = 0
         for row in csv_reader:
             
-            if fileCount % 1000 == 0:
-                print(f'Unpacking {fileCount}/{numSamples}...', end = ' ')
-
-            pixels = row[:-1] 
-            pixels = np.array(pixels, dtype='float64')
+            if fileCount % 1000 == 0: print(f'Unpacking {fileCount}/{numSamples}...', end=' ')
+            
+            if containsLabels: row = row[:-1]
+             
+            pixels = np.array(row, dtype='float64')
             pixels = pixels.reshape(dimImage)
             image = Image.fromarray(pixels, colorEncode)
 
