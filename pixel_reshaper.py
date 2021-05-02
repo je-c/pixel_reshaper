@@ -83,7 +83,7 @@ def unpack_images(classNames, loc, dirName, splitPercent, dimImage, fileName, co
     with open(fileName) as csv_file:
         numSamples = sum(1 for line in csv_file)-1
         test_idx = [random.randint(0, numSamples) for i in range(int(numSamples * splitPercent))]
-        delim = csv.Sniffer().sniff(csv_file.read(), delimiters=';,\t|')
+        delim = csv.Sniffer().sniff(csv_file.readline())
         csv_file.seek(0)
         csv_reader = csv.reader(csv_file, delim)
 
